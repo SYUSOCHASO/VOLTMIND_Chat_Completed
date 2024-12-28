@@ -380,8 +380,8 @@ def add_img_url_4_claude(messages, image_base64):
                     "type": "image",
                     "source": {
                         "type": "base64",
-                        "media_type": "image/jpeg",
-                        "data": image_base64
+                        "media_type": "image/png",  # PNGフォーマットも受け付けるように変更
+                        "data": f"{image_base64}"   # 'data:image/jpeg;base64,' プレフィックスを削除
                     }
                 }
             ]
