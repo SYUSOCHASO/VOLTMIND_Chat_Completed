@@ -106,11 +106,13 @@ SYSTEM_PROMPT = funs.SYSTEM_PROMPT
 def get_system_prompt(model_name):
     # 基本のLLMモデル（デフォルト値）を設定
     default_llm_models = {
-        'groq': 'llama-3.2-90b',
-        'gpt': 'gpt-4-turbo-preview',
-        'gemini': 'gemini-pro',
-        'claude': 'claude-3-sonnet',
-        'xai': 'xai-1.0-turbo'
+        'groq': 'llama-3.2-90b-vision-preview',
+        'gpt': 'chatgpt-4o-latest',
+        'gemini': 'gemini-2.0-flash-exp',
+        'claude': 'claude-3-5-sonnet-latest',
+        'xai': 'grok-2-1212',
+        'deepseek': 'deepseek-chat',
+        'o3mini': 'o3-mini'
     }
 
     try:
@@ -141,6 +143,8 @@ model_functions = {
     "gpt": funs.gpt_chat,
     "gemini": funs.gemini_chat,
     "xai": funs.xai_chat,
+    "deepseek": funs.deepseek_chat,
+    "o3mini": funs.o3_chat,
     "VOLTMIND AI": agent.VOLTMINDBOT,
     "税務GPT": agent.税務GPT,
     "薬科GPT": agent.薬科GPT,
@@ -625,6 +629,8 @@ DEFAULT_MODEL_NAMES = {
     "gemini": "Gemini",
     "claude": "Claude",
     "xai": "xAI",
+    "deepseek": "DeepSeek",
+    "o3mini": "OpenAI o3 mini",
     "VOLTMIND AI": "VOLTMIND AI",
     "税務GPT": "税務GPT",
     "薬科GPT": "薬科GPT",
@@ -644,15 +650,21 @@ if __name__ == "__main__":
         # モデル名の初期化（データベースが空の場合のみ）
         try:
             existing_models_count = ModelName.query.count()
-            if existing_models_count == 0:
-                print("No model names found. Initializing with defaults...")
-                for name, display_name in DEFAULT_MODEL_NAMES.items():
+            # 既存のモデル名を取得
+            existing_models = {model.name: model for model in ModelName.query.all()}
+            
+            # 新しいモデルを追加または更新
+            for name, display_name in DEFAULT_MODEL_NAMES.items():
+                if name not in existing_models:
+                    print(f"Adding new model: {name} ({display_name})")
                     new_model = ModelName(name=name, display_name=display_name)
                     db.session.add(new_model)
-                db.session.commit()
-                print("Model names initialized successfully")
-            else:
-                print(f"Found {existing_models_count} existing model names. Skipping initialization.")
+                else:
+                    print(f"Updating existing model: {name}")
+                    existing_models[name].display_name = display_name
+            
+            db.session.commit()
+            print("Model names updated successfully")
         except Exception as e:
             print(f"Error checking/initializing model names: {str(e)}")
             db.session.rollback()
@@ -687,4 +699,4 @@ if __name__ == "__main__":
             print(f"Error checking/initializing system prompts: {str(e)}")
             db.session.rollback()
     
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
