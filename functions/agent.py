@@ -1,4 +1,4 @@
-from functions.funs import gemini_chat, groq_chat, gpt_chat, claude_chat, xai_chat
+from functions.funs import gemini_chat, groq_chat, gpt_chat, claude_chat, xai_chat, deepseek_chat, o3_chat
 
 def get_llm_function(llm_model):
     model_functions = {
@@ -6,7 +6,9 @@ def get_llm_function(llm_model):
         'groq': groq_chat,
         'gpt': gpt_chat,
         'claude': claude_chat,
-        'xai': xai_chat
+        'xai': xai_chat,
+        'deepseek': deepseek_chat,
+        'o3mini': o3_chat
     }
     return model_functions.get(llm_model, gemini_chat)
 
