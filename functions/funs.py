@@ -104,6 +104,11 @@ client_gemini = openai.OpenAI(
     base_url="https://generativelanguage.googleapis.com/v1beta/"
 )
 
+client_deepseek = openai.OpenAI(
+    api_key=os.environ.get("DEEPSEEK_API_KEY"),
+    base_url="https://api.deepseek.com",
+)
+
 def gpt_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "chatgpt-4o-latest"):
     if type(user_inputs) == str:
         input_messages_list = [
@@ -203,7 +208,7 @@ def gemini_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "gemini-2
     )
     return completion.choices[0].message.content
 
-def claude_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "claude-3-5-haiku-latest"):
+def claude_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "claude-3-5-sonnet-latest"):
     if type(user_inputs) == str:
         input_messages_list = [
             {"role": "user", "content": user_inputs},
@@ -222,23 +227,82 @@ def claude_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "claude-3
     )
     return completion.content[0].text
 
-def xai_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "grok-2-1212"):
-    if type(user_inputs) == str:
-        input_messages_list = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_inputs},
-        ]
-    elif type(user_inputs) == list:
-        input_messages_list = user_inputs.copy()  # コピーを作成
-        input_messages_list.insert(0, {"role": "system", "content": system_prompt})
-    else:
-        raise ValueError("user_inputs should be a string or a list.")  # エラーハンドリングを追加
+def deepseek_chat(user_inputs, system_prompt=SYSTEM_PROMPT, main_model="deepseek-chat"):
+    try:
+        if type(user_inputs) == str:
+            input_messages_list = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_inputs},
+            ]
+        elif type(user_inputs) == list:
+            input_messages_list = user_inputs.copy()
+            input_messages_list.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            raise ValueError("user_inputs should be a string or a list.")
 
-    completion = client_xai.chat.completions.create(
-        model=main_model,
-        messages=input_messages_list
-    )
-    return completion.choices[0].message.content
+        completion = client_deepseek.chat.completions.create(
+            model=main_model,
+            messages=input_messages_list
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        error_message = f"DeepSeekチャットエラー: {str(e)}"
+        print(error_message)
+        return error_message
+
+def o3_chat(user_inputs, system_prompt=SYSTEM_PROMPT, main_model="o3-mini"):
+    try:
+        if type(user_inputs) == str:
+            input_messages_list = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_inputs},
+            ]
+        elif type(user_inputs) == list:
+            input_messages_list = user_inputs.copy()
+            input_messages_list.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            raise ValueError("user_inputs should be a string or a list.")
+
+        completion = client_gpt.chat.completions.create(
+            model=main_model,
+            messages=input_messages_list
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        error_message = f"OpenAI o3 miniチャットエラー: {str(e)}"
+        print(error_message)
+        return error_message
+
+def xai_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "grok-2-1212"):
+    try:
+        if type(user_inputs) == str:
+            input_messages_list = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_inputs},
+            ]
+        elif type(user_inputs) == list:
+            input_messages_list = user_inputs.copy()  # コピーを作成
+            input_messages_list.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            raise ValueError("user_inputs should be a string or a list.")
+
+        # APIキーの存在確認
+        if not os.environ.get("XAI_API_KEY"):
+            raise ValueError("XAI_API_KEY is not set in environment variables")
+
+        completion = client_xai.chat.completions.create(
+            model=main_model,
+            messages=input_messages_list
+        )
+        return completion.choices[0].message.content
+    except openai.APIError as e:
+        error_message = f"xAI APIエラー: {str(e)}"
+        print(error_message)  # ログ出力
+        return error_message
+    except Exception as e:
+        error_message = f"xAIチャットエラー: {str(e)}"
+        print(error_message)  # ログ出力
+        return error_message
 
 def pplx_chat(user_inputs,system_prompt = SYSTEM_PROMPT,main_model = "llama-3.1-sonar-large-128k-online"):
     if type(user_inputs) == str:
