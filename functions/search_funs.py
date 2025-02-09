@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 import json
 
 ## 文章検索エンジン
-from langchain.retrievers import TFIDFRetriever
-from langchain.retrievers import BM25Retriever
+from langchain_community.retrievers import TFIDFRetriever
+from langchain_community.retrievers import BM25Retriever
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List
 
