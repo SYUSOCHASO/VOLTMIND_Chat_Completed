@@ -52,6 +52,7 @@ class ModelName(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)  # 内部で使用する名前
     display_name = db.Column(db.String(50), nullable=False)  # 表示用の名前
+    order = db.Column(db.Integer, nullable=False)  # 表示順序を追加
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -300,14 +301,14 @@ def logout():
 def index():
     # ユーザーのチャット履歴を取得
     chats = Chat.query.filter_by(user_id=current_user.id).order_by(Chat.created_at.desc()).all()
-    # モデル名一覧を取得
-    models = ModelName.query.all()
+    # モデル名一覧を取得（順序でソート）
+    models = ModelName.query.order_by(ModelName.order).all()
     model_names = [{
         "name": model.name,
         "display_name": model.display_name
     } for model in models] if models else [
         {"name": name, "display_name": display_name}
-        for name, display_name in DEFAULT_MODEL_NAMES.items()
+        for name, display_name, order in DEFAULT_MODEL_NAMES
     ]
     return render_template("index.html", chats=chats, models=model_names)
 
@@ -622,26 +623,26 @@ def update_model_name(name):
 
 from functions.default_prompts import DEFAULT_SYSTEM_PROMPTS
 
-# デフォルトのモデル名マッピング
-DEFAULT_MODEL_NAMES = {
-    "groq": "Groq",
-    "gpt": "ChatGPT",
-    "gemini": "Gemini",
-    "claude": "Claude",
-    "xai": "xAI",
-    "deepseek": "DeepSeek",
-    "o3mini": "OpenAI o3 mini",
-    "VOLTMIND AI": "VOLTMIND AI",
-    "税務GPT": "税務GPT",
-    "薬科GPT": "薬科GPT",
-    "敬語の鬼": "敬語の鬼",
-    "節税商品説明AI": "節税商品説明AI",
-    "IT用語説明AI": "IT用語説明AI",
-    "要件定義書のヒアリングAI": "1.要件定義書のヒアリングAI",
-    "ビジネス向け要件定義書": "2.ビジネス向け要件定義書",
-    "エンジニア向け要件定義書": "3.エンジニア向け要件定義書",
-    "金額提示相談AI": "4.金額提示相談AI"
-}
+# デフォルトのモデル名マッピング（順序付き）
+DEFAULT_MODEL_NAMES = [
+    ("groq", "Groq", 1),
+    ("gpt", "ChatGPT", 2),
+    ("gemini", "Gemini", 3),
+    ("claude", "Claude", 4),
+    ("xai", "xAI", 5),
+    ("deepseek", "DeepSeek", 6),
+    ("o3mini", "OpenAI o3 mini", 7),
+    ("VOLTMIND AI", "VOLTMIND AI", 8),
+    ("税務GPT", "税務GPT", 9),
+    ("薬科GPT", "薬科GPT", 10),
+    ("敬語の鬼", "敬語の鬼", 11),
+    ("節税商品説明AI", "節税商品説明AI", 12),
+    ("IT用語説明AI", "IT用語説明AI", 13),
+    ("要件定義書のヒアリングAI", "1.要件定義書のヒアリングAI", 14),
+    ("ビジネス向け要件定義書", "2.ビジネス向け要件定義書", 15),
+    ("エンジニア向け要件定義書", "3.エンジニア向け要件定義書", 16),
+    ("金額提示相談AI", "4.金額提示相談AI", 17)
+]
 
 if __name__ == "__main__":
     with app.app_context():
@@ -649,19 +650,20 @@ if __name__ == "__main__":
         
         # モデル名の初期化（データベースが空の場合のみ）
         try:
-            existing_models_count = ModelName.query.count()
             # 既存のモデル名を取得
             existing_models = {model.name: model for model in ModelName.query.all()}
             
-            # 新しいモデルを追加または更新
-            for name, display_name in DEFAULT_MODEL_NAMES.items():
+            # 新しいモデルを追加または更新（順序も含めて）
+            for name, display_name, order in DEFAULT_MODEL_NAMES:
                 if name not in existing_models:
-                    print(f"Adding new model: {name} ({display_name})")
-                    new_model = ModelName(name=name, display_name=display_name)
+                    print(f"Adding new model: {name} ({display_name}) with order {order}")
+                    new_model = ModelName(name=name, display_name=display_name, order=order)
                     db.session.add(new_model)
                 else:
                     print(f"Updating existing model: {name}")
-                    existing_models[name].display_name = display_name
+                    model = existing_models[name]
+                    model.display_name = display_name
+                    model.order = order  # 順序も更新
             
             db.session.commit()
             print("Model names updated successfully")
